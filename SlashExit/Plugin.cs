@@ -5,6 +5,7 @@ using System.IO;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using SlashExit.Windows;
+using System.Diagnostics;
 
 namespace SlashExit;
 
@@ -17,7 +18,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
-    private const string CommandName = "/pmycommand";
+    private const string CommandName = "/exit";
 
     public Configuration Configuration { get; init; }
 
@@ -63,6 +64,34 @@ public sealed class Plugin : IDalamudPlugin
 
     private void OnCommand(string command, string args)
     {
+        if (Configuration.KillACT)
+        {
+            var processes = Process.GetProcessesByName("Advanced Combat Tracker");
+            if (processes.Length > 0)
+            {
+                foreach (var process in processes)
+                {
+                    process.Kill();
+                }
+            }
+        }
+
+        if (Configuration.KillTriggevent)
+        {
+            var processes = Process.GetProcessesByName("javaw");
+            if (processes.Length > 0)
+            {
+                foreach (var process in processes)
+                {
+                    if (process.MainWindowTitle == "Triggevent")
+                    {
+                        process.Kill();
+                    }
+                }
+            }
+        }
+
+        Process.GetCurrentProcess().Kill();
     }
 
     private void DrawUI() => WindowSystem.Draw();
