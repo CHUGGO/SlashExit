@@ -23,7 +23,6 @@ public sealed class Plugin : IDalamudPlugin
 
     public readonly WindowSystem WindowSystem = new("SlashExit");
     private ConfigWindow ConfigWindow { get; init; }
-    private MainWindow MainWindow { get; init; }
 
     public Plugin()
     {
@@ -33,10 +32,8 @@ public sealed class Plugin : IDalamudPlugin
         var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
 
         ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this, goatImagePath);
 
         WindowSystem.AddWindow(ConfigWindow);
-        WindowSystem.AddWindow(MainWindow);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -49,9 +46,6 @@ public sealed class Plugin : IDalamudPlugin
         // to toggle the display status of the configuration ui
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
 
-        // Adds another button that is doing the same but for the main ui of the plugin
-        PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
-
         // Add a simple message to the log with level set to information
         // Use /xllog to open the log window in-game
         // Example Output: 00:57:54.959 | INF | [SlashExit] ===A cool log message from Sample Plugin===
@@ -63,20 +57,15 @@ public sealed class Plugin : IDalamudPlugin
         WindowSystem.RemoveAllWindows();
 
         ConfigWindow.Dispose();
-        MainWindow.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
     }
 
     private void OnCommand(string command, string args)
     {
-        // in response to the slash command, just toggle the display status of our main ui
-        ToggleMainUI();
     }
 
     private void DrawUI() => WindowSystem.Draw();
 
     public void ToggleConfigUI() => ConfigWindow.Toggle();
-
-    public void ToggleMainUI() => MainWindow.Toggle();
 }
