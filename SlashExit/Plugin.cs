@@ -4,7 +4,6 @@ using Dalamud.Plugin;
 using System.IO;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using SlashExit.Windows;
 using System.Diagnostics;
 
 namespace SlashExit;
@@ -12,48 +11,46 @@ namespace SlashExit;
 public sealed class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
-    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
-    [PluginService] internal static IPluginLog Log { get; private set; } = null!;
-    [PluginService] internal static IChatGui Chat { get; private set; } = null!; // Add this line
+    [PluginService] internal static IChatGui Chat { get; private set; } = null!;
 
     private const string CommandName = "/exit";
+    private const string CommandName2 = "/exitACT";
+    private const string CommandName3 = "/exitTrigg";
 
     public Configuration Configuration { get; init; }
 
     public readonly WindowSystem WindowSystem = new("SlashExit");
-    private ConfigWindow ConfigWindow { get; init; }
 
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
-        // you might normally want to embed resources and load them from the manifest stream
-        var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-
-        ConfigWindow = new ConfigWindow(this);
-
-        WindowSystem.AddWindow(ConfigWindow);
+        var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "exit.png");
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "Exit Game"
         });
 
-        // This adds a button to the plugin installer entry of this plugin which allows
-        // to toggle the display status of the configuration ui
-        PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
+        CommandManager.AddHandler(CommandName2, new CommandInfo(OnCommandConfigACT)
+        {
+            HelpMessage = "Toggle also killing ACT"
+        });
+
+        CommandManager.AddHandler(CommandName3, new CommandInfo(OnCommandConfigTriggevent)
+        {
+            HelpMessage = "Toggle also killing Triggevent"
+        });
     }
 
     public void Dispose()
     {
         WindowSystem.RemoveAllWindows();
-
-        ConfigWindow.Dispose();
-
         CommandManager.RemoveHandler(CommandName);
+        CommandManager.RemoveHandler(CommandName2);
+        CommandManager.RemoveHandler(CommandName3);
     }
 
     private void OnCommand(string command, string args)
@@ -99,5 +96,17 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
-    public void ToggleConfigUI() => ConfigWindow.Toggle();
+    private void OnCommandConfigACT(string command, string args)
+    {
+        Configuration.KillACT = !Configuration.KillACT;
+        Configuration.Save();
+        Chat.Print($"[SlashExit] KillACT: {Configuration.KillACT}");
+    }
+
+    private void OnCommandConfigTriggevent(string command, string args)
+    {
+        Configuration.KillTriggevent = !Configuration.KillTriggevent;
+        Configuration.Save();
+        Chat.Print($"[SlashExit] KillTriggevent: {Configuration.KillTriggevent}");
+    }
 }
