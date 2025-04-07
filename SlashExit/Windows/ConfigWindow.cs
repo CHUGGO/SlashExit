@@ -16,8 +16,7 @@ public class ConfigWindow : Window, IDisposable
     {
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar;
 
-        Size = new Vector2(232, 90);
-        SizeCondition = ImGuiCond.Always;
+        Size = new Vector2(250, 100);
 
         Configuration = plugin.Configuration;
     }
@@ -31,13 +30,15 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
+        ImGui.Text("Also kill these if found:");
+        ImGui.Spacing();
         var kACT = Configuration.KillACT;
         if (ImGui.Checkbox("Advanced Combat Tracker", ref kACT))
         {
             Configuration.KillACT = kACT;
             Configuration.Save();
         }
-
+        ImGui.Spacing();
         var kTriggevent = Configuration.KillTriggevent;
         if (ImGui.Checkbox("Triggevent", ref kTriggevent))
         {

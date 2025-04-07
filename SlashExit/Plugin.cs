@@ -17,6 +17,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
+    [PluginService] internal static IChatGui Chat { get; private set; } = null!; // Add this line
 
     private const string CommandName = "/exit";
 
@@ -38,19 +39,12 @@ public sealed class Plugin : IDalamudPlugin
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "A useful message to display in /xlhelp"
+            HelpMessage = "Exit Game"
         });
-
-        PluginInterface.UiBuilder.Draw += DrawUI;
 
         // This adds a button to the plugin installer entry of this plugin which allows
         // to toggle the display status of the configuration ui
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
-
-        // Add a simple message to the log with level set to information
-        // Use /xllog to open the log window in-game
-        // Example Output: 00:57:54.959 | INF | [SlashExit] ===A cool log message from Sample Plugin===
-        Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
     }
 
     public void Dispose()
@@ -64,37 +58,46 @@ public sealed class Plugin : IDalamudPlugin
 
     private void OnCommand(string command, string args)
     {
-        if (Configuration.KillACT)
+        // Check if the user is idle
+        if (ClientState.IsClientIdle())
         {
-            var processes = Process.GetProcessesByName("Advanced Combat Tracker");
-            if (processes.Length > 0)
+            //Kill ACT if enabled
+            if (Configuration.KillACT)
             {
-                foreach (var process in processes)
+                var processes = Process.GetProcessesByName("Advanced Combat Tracker");
+                if (processes.Length > 0)
                 {
-                    process.Kill();
-                }
-            }
-        }
-
-        if (Configuration.KillTriggevent)
-        {
-            var processes = Process.GetProcessesByName("javaw");
-            if (processes.Length > 0)
-            {
-                foreach (var process in processes)
-                {
-                    if (process.MainWindowTitle == "Triggevent")
+                    foreach (var process in processes)
                     {
                         process.Kill();
                     }
                 }
             }
+
+            //Kill Triggevent if enabled
+            if (Configuration.KillTriggevent)
+            {
+                var processes = Process.GetProcessesByName("javaw");
+                if (processes.Length > 0)
+                {
+                    foreach (var process in processes)
+                    {
+                        if (process.MainWindowTitle == "Triggevent")
+                        {
+                            process.Kill();
+                        }
+                    }
+                }
+            }
+
+            //Kill XIV
+            Process.GetCurrentProcess().Kill();
         }
-
-        Process.GetCurrentProcess().Kill();
+        else
+        {
+            Chat.Print("[SlashExit] You must be idle to execute this command.");
+        }
     }
-
-    private void DrawUI() => WindowSystem.Draw();
 
     public void ToggleConfigUI() => ConfigWindow.Toggle();
 }
